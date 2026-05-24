@@ -47,6 +47,11 @@ interface ControlPanelProps {
   acceptedIntervalMs: number | null
   rejectedIntervalCount: number
   intervalStats: IntervalStats | null
+  metronomeBpm: number | null
+  metronomeSource: 'target' | 'detected'
+  metronomeDotPct: number | null
+  metronomeCountdownMs: number | null
+  metronomeBeatNow: boolean
   onRefreshDevices: () => void
   onCalibrateMic: () => void
   onCopyDebug: () => void
@@ -92,6 +97,11 @@ export function ControlPanel({
   acceptedIntervalMs,
   rejectedIntervalCount,
   intervalStats,
+  metronomeBpm,
+  metronomeSource,
+  metronomeDotPct,
+  metronomeCountdownMs,
+  metronomeBeatNow,
   onRefreshDevices,
   onCalibrateMic,
   onCopyDebug,
@@ -245,6 +255,26 @@ export function ControlPanel({
           </button>
         </div>
       </div>
+
+      {metronomeDotPct !== null && metronomeCountdownMs !== null ? (
+        <div
+          className={`metronome-visual${metronomeBeatNow ? ' beat-now' : ''}`}
+          role="img"
+          aria-label="Visual metronome dot and countdown to next beat"
+        >
+          <div className="metronome-head">
+            <span>Visual metronome ({metronomeSource})</span>
+            <span>{metronomeBpm ? `${metronomeBpm.toFixed(2)} BPM` : '--'}</span>
+          </div>
+          <div className="metronome-track">
+            <div
+              className={`metronome-dot${metronomeBeatNow ? ' beat-now' : ''}`}
+              style={{ left: `${metronomeDotPct.toFixed(2)}%` }}
+            />
+          </div>
+          <p className="calibration-info">Next beat in {Math.max(0, Math.round(metronomeCountdownMs))} ms</p>
+        </div>
+      ) : null}
 
       {inputMode === 'mic' ? <p className="calibration-info">{calibrationInfo}</p> : null}
       {inputMode === 'mic' ? (

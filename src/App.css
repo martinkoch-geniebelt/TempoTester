@@ -124,6 +124,72 @@
   flex-wrap: wrap;
 }
 
+.metronome-visual {
+  margin-top: 0.55rem;
+  padding: 0.5rem 0.6rem 0.35rem;
+  border-radius: 12px;
+  background: rgba(16, 52, 64, 0.08);
+  border: 1px solid rgba(31, 69, 77, 0.24);
+  box-shadow: inset 0 0 0 0 rgba(255, 183, 127, 0.25);
+}
+
+.metronome-visual.beat-now {
+  animation: metronome-hit 0.2s ease-out;
+}
+
+.metronome-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  font: 600 0.78rem/1.2 'Space Grotesk', sans-serif;
+  color: rgba(14, 45, 55, 0.88);
+}
+
+.metronome-track {
+  position: relative;
+  margin-top: 0.3rem;
+  width: 100%;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(66, 120, 136, 0.24);
+  overflow: hidden;
+}
+
+@keyframes metronome-hit {
+  0% {
+    background: rgba(255, 186, 126, 0.28);
+    box-shadow: inset 0 0 0 1px rgba(255, 178, 120, 0.52), 0 0 22px rgba(255, 173, 108, 0.25);
+    filter: brightness(1.12);
+  }
+  35% {
+    background: rgba(255, 174, 120, 0.18);
+  }
+  100% {
+    background: rgba(16, 52, 64, 0.08);
+    box-shadow: inset 0 0 0 0 rgba(255, 183, 127, 0.25), 0 0 0 rgba(255, 173, 108, 0);
+    filter: brightness(1);
+  }
+}
+
+.metronome-dot {
+  position: absolute;
+  top: 50%;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 32% 32%, #fff2cc, #f9a45b 44%, #f06f58 100%);
+  box-shadow: 0 0 0 2px rgba(255, 183, 127, 0.35), 0 0 14px rgba(239, 111, 88, 0.45);
+  transition: transform 0.14s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.14s ease-out;
+  will-change: left, transform;
+}
+
+.metronome-dot.beat-now {
+  transform: translate(-50%, -50%) scale(1.45);
+  box-shadow: 0 0 0 3px rgba(255, 192, 126, 0.55), 0 0 20px rgba(255, 141, 92, 0.68);
+}
+
 .copy-debug-inline {
   border: 1px solid rgba(31, 69, 77, 0.35);
   border-radius: 999px;

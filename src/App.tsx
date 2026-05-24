@@ -79,6 +79,36 @@ function App() {
     return offsetSamples.filter((s) => s.at >= windowNowMs - visiblePastMs).length
   }, [offsetSamples, graphNowMs])
 
+  const metronomeIntervalMs = useMemo(() => {
+    if (targetBpmEnabled) {
+      return 60000 / Math.max(30, targetBpm)
+    }
+    if (intervalStats) {
+      return intervalStats.avgIntervalMs
+    }
+    return null
+  }, [targetBpmEnabled, targetBpm, intervalStats])
+
+  const metronomeCountdown = useMemo(() => {
+    if (!metronomeIntervalMs) {
+      return null
+    }
+    const phaseMs = ((graphNowMs % metronomeIntervalMs) + metronomeIntervalMs) % metronomeIntervalMs
+    const remainingMs = metronomeIntervalMs - phaseMs
+    const beatNowThresholdMs = Math.max(80, metronomeIntervalMs * 0.12)
+    const msToNearestBeat = Math.min(phaseMs, remainingMs)
+    // Smooth swing wave: left -> right -> left over two beats.
+    const swingPeriodMs = metronomeIntervalMs * 2
+    const swingPhase = ((graphNowMs % swingPeriodMs) + swingPeriodMs) % swingPeriodMs
+    const dotPct = ((Math.sin((swingPhase / swingPeriodMs) * Math.PI * 2 - Math.PI / 2) + 1) / 2) * 100
+
+    return {
+      remainingMs,
+      dotPct,
+      isBeatNow: msToNearestBeat <= beatNowThresholdMs,
+    }
+  }, [metronomeIntervalMs, graphNowMs])
+
   const debugSnapshot = useMemo(() => {
     const fmt = (value: number | null, digits = 2) => (value === null ? '--' : value.toFixed(digits))
     const recentIntervals = intervalSamples.slice(-10).map((value) => value.toFixed(1)).join(', ')
@@ -319,6 +349,11 @@ function App() {
           acceptedIntervalMs={acceptedIntervalMs}
           rejectedIntervalCount={rejectedIntervalCount}
           intervalStats={intervalStats}
+          metronomeBpm={metronomeIntervalMs ? 60000 / metronomeIntervalMs : null}
+          metronomeSource={targetBpmEnabled ? 'target' : 'detected'}
+          metronomeDotPct={metronomeCountdown ? metronomeCountdown.dotPct : null}
+          metronomeCountdownMs={metronomeCountdown ? metronomeCountdown.remainingMs : null}
+          metronomeBeatNow={metronomeCountdown ? metronomeCountdown.isBeatNow : false}
           onRefreshDevices={refreshDevices}
           onCalibrateMic={calibrateMic}
           onCopyDebug={copyDebugSnapshot}
