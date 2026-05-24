@@ -1,13 +1,5 @@
 import type { DeviceOption, Status } from '../types'
 
-interface IntervalStats {
-  count: number
-  avgIntervalMs: number
-  lastIntervalMs: number
-  stdMs: number
-  bpmEstimate: number
-}
-
 interface ControlPanelProps {
   inputMode: 'mic' | 'key'
   setInputMode: (val: 'mic' | 'key') => void
@@ -24,12 +16,6 @@ interface ControlPanelProps {
   setTargetBpmEnabled: (val: boolean) => void
   targetBpm: number
   setTargetBpm: (val: number) => void
-  emulationEnabled: boolean
-  setEmulationEnabled: (val: boolean) => void
-  emulationBpm: number
-  setEmulationBpm: (val: number) => void
-  emulationJitterMs: number
-  setEmulationJitterMs: (val: number) => void
   permissionError: string | null
   deviceError: string | null
   status: Status
@@ -37,19 +23,13 @@ interface ControlPanelProps {
   energy: number
   showDebugPanel: boolean
   setShowDebugPanel: (val: boolean | ((prev: boolean) => boolean)) => void
-  debugCopyStatus: 'idle' | 'copied' | 'failed'
   detectedBeatCount: number
   workletOnsetCount: number
   emulatedBeatCount: number
   offsetSamplesLength: number
   visibleSamplesCount: number
-  rawIntervalMs: number | null
-  acceptedIntervalMs: number | null
-  rejectedIntervalCount: number
-  intervalStats: IntervalStats | null
   onRefreshDevices: () => void
   onCalibrateMic: () => void
-  onCopyDebug: () => void
   keyFlashCount: number
 }
 
@@ -69,12 +49,6 @@ export function ControlPanel({
   setTargetBpmEnabled,
   targetBpm,
   setTargetBpm,
-  emulationEnabled,
-  setEmulationEnabled,
-  emulationBpm,
-  setEmulationBpm,
-  emulationJitterMs,
-  setEmulationJitterMs,
   permissionError,
   deviceError,
   status,
@@ -82,140 +56,117 @@ export function ControlPanel({
   energy,
   showDebugPanel,
   setShowDebugPanel,
-  debugCopyStatus,
   detectedBeatCount,
   workletOnsetCount,
   emulatedBeatCount,
   offsetSamplesLength,
   visibleSamplesCount,
-  rawIntervalMs,
-  acceptedIntervalMs,
-  rejectedIntervalCount,
-  intervalStats,
   onRefreshDevices,
   onCalibrateMic,
-  onCopyDebug,
   keyFlashCount,
 }: ControlPanelProps) {
   return (
     <section className="panel control-panel">
-      <h1>BeatSync Lab</h1>
-      <p className="lede">Use your external metronome and track detected beat intervals in real time.</p>
+      <div className="settings-stack">
+        <section className="settings-group">
+          <h2 className="settings-heading">Input</h2>
+          <div className="settings-grid two-up">
+            <label className="setting-field" htmlFor="input-mode">
+              <span className="setting-label">Input source</span>
+              <select
+                id="input-mode"
+                value={inputMode}
+                onChange={(event) => setInputMode(event.target.value as 'mic' | 'key')}
+              >
+                <option value="mic">Microphone</option>
+                <option value="key">Keyboard Tap</option>
+              </select>
+            </label>
 
-      <div className="control-grid">
-        <label htmlFor="input-mode">Input source</label>
-        <select
-          id="input-mode"
-          value={inputMode}
-          onChange={(event) => setInputMode(event.target.value as 'mic' | 'key')}
-        >
-          <option value="mic">Microphone</option>
-          <option value="key">Keyboard Tap</option>
-        </select>
+            <label className="setting-field" htmlFor="detection-mode">
+              <span className="setting-label">Detection engine</span>
+              <select
+                id="detection-mode"
+                value={detectionMode}
+                onChange={(event) => setDetectionMode(event.target.value as 'standard' | 'precision')}
+                disabled={inputMode !== 'mic'}
+              >
+                <option value="precision">Precision (AudioWorklet)</option>
+                <option value="standard">Standard (Analyser)</option>
+              </select>
+            </label>
 
-        <label htmlFor="detection-mode">Detection engine</label>
-        <select
-          id="detection-mode"
-          value={detectionMode}
-          onChange={(event) => setDetectionMode(event.target.value as 'standard' | 'precision')}
-          disabled={inputMode !== 'mic'}
-        >
-          <option value="precision">Precision (AudioWorklet)</option>
-          <option value="standard">Standard (Analyser)</option>
-        </select>
+            {inputMode === 'mic' ? (
+              <label className="setting-field setting-field-wide" htmlFor="input-device">
+                <span className="setting-label">Input device</span>
+                <select
+                  id="input-device"
+                  value={selectedInputId}
+                  onChange={(event) => setSelectedInputId(event.target.value)}
+                  disabled={inputDevices.length === 0}
+                >
+                  {inputDevices.length === 0 ? <option value="">No input devices found</option> : null}
+                  {inputDevices.map((device) => (
+                    <option key={device.id} value={device.id}>
+                      {device.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+          </div>
+          <div className="settings-actions">
+            {inputMode === 'mic' ? (
+              <>
+                <button type="button" onClick={onRefreshDevices}>
+                  Refresh Devices
+                </button>
+                <button type="button" onClick={() => setListening((active) => !active)}>
+                  {listening ? 'Stop Listening' : 'Enable Mic Input'}
+                </button>
+                <button type="button" onClick={onCalibrateMic} disabled={calibrating}>
+                  {calibrating ? 'Calibrating...' : 'Calibrate Mic'}
+                </button>
+              </>
+            ) : (
+              <p className="key-hint">
+                Tap Space, Enter, or F on each beat.
+                {keyFlashCount > 0 ? <span key={keyFlashCount} className="tap-flash-dot" aria-hidden="true" /> : null}
+              </p>
+            )}
+          </div>
+        </section>
 
-        <label htmlFor="input-device">Input device</label>
-        <select
-          id="input-device"
-          value={selectedInputId}
-          onChange={(event) => setSelectedInputId(event.target.value)}
-          disabled={inputDevices.length === 0}
-        >
-          {inputDevices.length === 0 ? <option value="">No input devices found</option> : null}
-          {inputDevices.map((device) => (
-            <option key={device.id} value={device.id}>
-              {device.label}
-            </option>
-          ))}
-        </select>
+        <section className="settings-group">
+          <h2 className="settings-heading">Tempo Assistance</h2>
+          <div className="settings-grid two-up">
+            <label className="setting-field" htmlFor="target-bpm-enabled">
+              <span className="setting-label">Target BPM mode</span>
+              <select
+                id="target-bpm-enabled"
+                value={targetBpmEnabled ? 'on' : 'off'}
+                onChange={(event) => setTargetBpmEnabled(event.target.value === 'on')}
+              >
+                <option value="off">Off</option>
+                <option value="on">On</option>
+              </select>
+            </label>
 
-        <button type="button" onClick={onRefreshDevices}>
-          Refresh Devices
-        </button>
-
-        <label htmlFor="emulation-enabled">Emulated metronome input</label>
-        <select
-          id="emulation-enabled"
-          value={emulationEnabled ? 'on' : 'off'}
-          onChange={(event) => setEmulationEnabled(event.target.value === 'on')}
-        >
-          <option value="off">Off</option>
-          <option value="on">On</option>
-        </select>
-
-        <label htmlFor="target-bpm-enabled">Target BPM mode</label>
-        <select
-          id="target-bpm-enabled"
-          value={targetBpmEnabled ? 'on' : 'off'}
-          onChange={(event) => setTargetBpmEnabled(event.target.value === 'on')}
-        >
-          <option value="off">Off</option>
-          <option value="on">On</option>
-        </select>
-
-        {targetBpmEnabled ? (
-          <>
-            <label htmlFor="target-bpm">Target tempo: {targetBpm} BPM</label>
-            <input
-              id="target-bpm"
-              type="range"
-              min={40}
-              max={220}
-              value={targetBpm}
-              onChange={(event) => setTargetBpm(Number(event.target.value))}
-            />
-          </>
-        ) : null}
-
-        {emulationEnabled ? (
-          <>
-            <label htmlFor="emulation-bpm">Emulation tempo: {emulationBpm} BPM</label>
-            <input
-              id="emulation-bpm"
-              type="range"
-              min={40}
-              max={220}
-              value={emulationBpm}
-              onChange={(event) => setEmulationBpm(Number(event.target.value))}
-            />
-
-            <label htmlFor="emulation-jitter">Emulation jitter: ±{emulationJitterMs} ms</label>
-            <input
-              id="emulation-jitter"
-              type="range"
-              min={0}
-              max={60}
-              value={emulationJitterMs}
-              onChange={(event) => setEmulationJitterMs(Number(event.target.value))}
-            />
-          </>
-        ) : null}
-
-        {inputMode === 'mic' ? (
-          <>
-            <button type="button" onClick={() => setListening((active) => !active)}>
-              {listening ? 'Stop Listening' : 'Enable Mic Input'}
-            </button>
-            <button type="button" onClick={onCalibrateMic} disabled={calibrating}>
-              {calibrating ? 'Calibrating...' : 'Calibrate Mic'}
-            </button>
-          </>
-        ) : (
-          <p className="key-hint">
-            Tap Space, Enter, or F on each beat.
-            {keyFlashCount > 0 ? <span key={keyFlashCount} className="tap-flash-dot" aria-hidden="true" /> : null}
-          </p>
-        )}
+            {targetBpmEnabled ? (
+              <label className="setting-field setting-field-wide" htmlFor="target-bpm">
+                <span className="setting-label">Target tempo: {targetBpm} BPM</span>
+                <input
+                  id="target-bpm"
+                  type="range"
+                  min={40}
+                  max={220}
+                  value={targetBpm}
+                  onChange={(event) => setTargetBpm(Number(event.target.value))}
+                />
+              </label>
+            ) : null}
+          </div>
+        </section>
       </div>
 
       {permissionError ? <p className="error">{permissionError}</p> : null}
@@ -236,13 +187,6 @@ export function ControlPanel({
           >
             {showDebugPanel ? 'Hide Debug Panel' : 'Show Debug Panel'}
           </button>
-          <button type="button" className="copy-debug-inline" onClick={onCopyDebug}>
-            {debugCopyStatus === 'copied'
-              ? 'Copied'
-              : debugCopyStatus === 'failed'
-                ? 'Copy failed'
-                : 'Copy Debug Data'}
-          </button>
         </div>
       </div>
 
@@ -253,19 +197,6 @@ export function ControlPanel({
           {offsetSamplesLength} | emulated {emulatedBeatCount} | worklet onsets {workletOnsetCount}
         </p>
       ) : null}
-      <p className="calibration-info">
-        Detector debug: raw {rawIntervalMs !== null ? `${rawIntervalMs.toFixed(1)} ms` : '--'} | accepted{' '}
-        {acceptedIntervalMs !== null ? `${acceptedIntervalMs.toFixed(1)} ms` : '--'} | rejected {rejectedIntervalCount}
-      </p>
-      <p className="calibration-info">
-        Target mode: {targetBpmEnabled ? `on (${targetBpm} BPM)` : 'off'}
-      </p>
-      <p className="calibration-info">External metronome mode: internal click disabled.</p>
-      <p className="calibration-info">
-        {intervalStats
-          ? `Free interval: last ${intervalStats.lastIntervalMs.toFixed(1)} ms | avg ${intervalStats.avgIntervalMs.toFixed(1)} ms | est ${intervalStats.bpmEstimate.toFixed(2)} BPM | std ${intervalStats.stdMs.toFixed(1)} ms | n=${intervalStats.count}`
-          : 'Free interval: waiting for at least two beats...'}
-      </p>
     </section>
   )
 }

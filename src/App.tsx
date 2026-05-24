@@ -12,7 +12,7 @@ import { DebugPanel } from './components/DebugPanel'
 
 function App() {
   const [detectionMode, setDetectionMode] = useState<'standard' | 'precision'>('precision')
-  const [inputMode, setInputMode] = useState<'mic' | 'key'>('mic')
+  const [inputMode, setInputMode] = useState<'mic' | 'key'>('key')
   const [listening, setListening] = useState(false)
   const [permissionError, setPermissionError] = useState<string | null>(null)
   const [calibrating, setCalibrating] = useState(false)
@@ -21,7 +21,7 @@ function App() {
   const [status] = useState<'idle'>('idle')
   const [graphNowMs, setGraphNowMs] = useState(() => performance.now())
   const [debugCopyStatus, setDebugCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle')
-  const [showDebugPanel, setShowDebugPanel] = useState(true)
+  const [showDebugPanel, setShowDebugPanel] = useState(false)
   const [keyFlashCount, setKeyFlashCount] = useState(0)
 
   const debugCopyResetTimeoutRef = useRef<number | null>(null)
@@ -292,16 +292,10 @@ function App() {
           setListening={setListening}
           calibrating={calibrating}
           calibrationInfo={calibrationInfo}
-          emulationEnabled={emulationEnabled}
-          setEmulationEnabled={setEmulationEnabled}
           targetBpmEnabled={targetBpmEnabled}
           setTargetBpmEnabled={setTargetBpmEnabled}
           targetBpm={targetBpm}
           setTargetBpm={setTargetBpm}
-          emulationBpm={emulationBpm}
-          setEmulationBpm={setEmulationBpm}
-          emulationJitterMs={emulationJitterMs}
-          setEmulationJitterMs={setEmulationJitterMs}
           permissionError={permissionError}
           deviceError={deviceError}
           status={status}
@@ -309,19 +303,13 @@ function App() {
           energy={energy}
           showDebugPanel={showDebugPanel}
           setShowDebugPanel={setShowDebugPanel}
-          debugCopyStatus={debugCopyStatus}
           detectedBeatCount={detectedBeatCount}
           workletOnsetCount={workletOnsetCount}
           emulatedBeatCount={emulatedBeatCount}
           offsetSamplesLength={offsetSamples.length}
           visibleSamplesCount={visibleSamplesCount}
-          rawIntervalMs={rawIntervalMs}
-          acceptedIntervalMs={acceptedIntervalMs}
-          rejectedIntervalCount={rejectedIntervalCount}
-          intervalStats={intervalStats}
           onRefreshDevices={refreshDevices}
           onCalibrateMic={calibrateMic}
-          onCopyDebug={copyDebugSnapshot}
           keyFlashCount={keyFlashCount}
         />
       </div>
@@ -329,6 +317,12 @@ function App() {
         <DebugPanel
           debugSnapshot={debugSnapshot}
           debugCopyStatus={debugCopyStatus}
+          emulationEnabled={emulationEnabled}
+          setEmulationEnabled={setEmulationEnabled}
+          emulationBpm={emulationBpm}
+          setEmulationBpm={setEmulationBpm}
+          emulationJitterMs={emulationJitterMs}
+          setEmulationJitterMs={setEmulationJitterMs}
           onCopy={copyDebugSnapshot}
         />
       ) : null}
