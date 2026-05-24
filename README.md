@@ -48,6 +48,21 @@ npm run preview
 npm run lint
 ```
 
+## Deploy to GitHub Pages
+
+This repo includes a GitHub Actions workflow at `.github/workflows/deploy-pages.yml`.
+
+1. Push this project to a GitHub repository.
+2. In GitHub, open **Settings -> Pages**.
+3. Under **Build and deployment**, set **Source** to **GitHub Actions**.
+4. Push to `main` (or run the workflow manually from the **Actions** tab).
+
+The workflow builds with `VITE_BASE_PATH=/<repo-name>/` and publishes `dist` to GitHub Pages.
+
+Your site URL will be:
+
+`https://<your-username>.github.io/<repo-name>/`
+
 ## How Detection Works
 
 ### Keyboard Mode
