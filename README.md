@@ -1,4 +1,4 @@
-# BeatSync Lab
+# Vibe Coded BeatSync Lab
 
 BeatSync Lab is a Vite + React + TypeScript browser app for tracking beat intervals from either keyboard taps or microphone input.
 
