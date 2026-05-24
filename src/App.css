@@ -1,12 +1,23 @@
 .app-shell {
-  width: min(1140px, 94vw);
+  width: min(1420px, 96vw);
   margin: 0 auto;
   height: 100dvh;
   padding: 0.7rem 0 0.8rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.9fr) minmax(320px, 1fr);
+  gap: 0.65rem;
+  overflow: hidden;
+}
+
+.app-shell.debug-hidden {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.main-column {
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
-  overflow: hidden;
 }
 
 .panel {
@@ -21,6 +32,9 @@
   background: linear-gradient(165deg, rgba(244, 239, 220, 0.86), rgba(236, 251, 247, 0.9));
   border: 1px solid rgba(183, 168, 128, 0.35);
   box-shadow: 0 24px 50px rgba(19, 40, 48, 0.18);
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 .visual-panel {
@@ -101,6 +115,27 @@
   gap: 0.9rem;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.status-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.copy-debug-inline {
+  border: 1px solid rgba(31, 69, 77, 0.35);
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  font: 600 0.76rem/1.1 'Space Grotesk', sans-serif;
+  color: #112b33;
+  background: rgba(249, 242, 225, 0.95);
+  cursor: pointer;
+}
+
+.copy-debug-inline:hover {
+  background: rgba(255, 228, 176, 0.95);
 }
 
 .status-pill {
@@ -263,8 +298,80 @@
   transition: width 0.08s linear;
 }
 
+.debug-panel {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  background: linear-gradient(165deg, rgba(245, 236, 214, 0.9), rgba(236, 251, 247, 0.92));
+  border: 1px solid rgba(183, 168, 128, 0.35);
+  box-shadow: 0 18px 34px rgba(19, 40, 48, 0.15);
+}
+
+.debug-panel h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: #17303a;
+}
+
+.debug-panel .debug-export-actions button {
+  border: none;
+  border-radius: 12px;
+  padding: 0.42rem 0.68rem;
+  font: 600 0.82rem/1.1 'Space Grotesk', sans-serif;
+  cursor: pointer;
+  color: #10272e;
+  background: linear-gradient(135deg, #ffd49c, #f4b264);
+}
+
+.debug-panel .debug-export-actions button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 14px rgba(58, 51, 36, 0.22);
+}
+
+.debug-panel .debug-export-actions button:active {
+  transform: translateY(1px);
+}
+
+.debug-panel .debug-export-hint {
+  color: rgba(12, 36, 46, 0.7);
+}
+
+.debug-panel .debug-export-textarea {
+  border: 1px solid rgba(31, 69, 77, 0.32);
+  background: rgba(247, 240, 224, 0.92);
+  color: #12242b;
+}
+
+.debug-export-textarea {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  resize: none;
+  border-radius: 8px;
+  border: 1px solid rgba(146, 193, 214, 0.25);
+  background: rgba(5, 18, 28, 0.72);
+  color: rgba(227, 246, 255, 0.92);
+  padding: 0.45rem;
+  font: 500 0.74rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.debug-export-actions {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.debug-export-hint {
+  color: rgba(200, 232, 246, 0.82);
+  font-size: 0.76rem;
+}
+
 @media (max-width: 800px) {
   .app-shell {
+    display: flex;
+    flex-direction: column;
     height: auto;
     min-height: 100dvh;
     overflow: visible;
@@ -272,9 +379,27 @@
     width: 94vw;
   }
 
+  .main-column {
+    min-height: auto;
+  }
+
   .panel {
     padding: 1.2rem;
     border-radius: 20px;
+  }
+
+  .control-panel {
+    overflow: visible;
+  }
+
+  .debug-panel {
+    min-height: auto;
+  }
+
+  .debug-export-textarea {
+    min-height: 180px;
+    resize: vertical;
+    flex: none;
   }
 
   .control-grid {
