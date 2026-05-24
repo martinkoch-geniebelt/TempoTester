@@ -369,6 +369,108 @@
   color: rgba(226, 244, 253, 0.9);
 }
 
+.bpm-history-wrap {
+  margin-top: 0.6rem;
+  border-radius: 16px;
+  border: 1px solid rgba(156, 203, 224, 0.22);
+  background: linear-gradient(180deg, rgba(14, 37, 57, 0.66), rgba(8, 23, 37, 0.72));
+  padding: 0.5rem 0.62rem 0.48rem;
+}
+
+.bpm-history-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: 0.2rem;
+}
+
+.bpm-history-head h3 {
+  margin: 0;
+  font: 700 0.84rem/1 'Space Grotesk', sans-serif;
+  letter-spacing: 0.03em;
+  color: rgba(226, 246, 255, 0.95);
+}
+
+.bpm-history-latest {
+  font: 600 0.73rem/1.1 'Space Grotesk', sans-serif;
+  color: rgba(175, 226, 255, 0.92);
+}
+
+.bpm-history-graph {
+  width: 100%;
+  height: 80px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(45, 101, 140, 0.16), rgba(8, 23, 37, 0.4));
+}
+
+.bpm-history-plot {
+  fill: rgba(9, 28, 44, 0.42);
+  stroke: rgba(162, 208, 228, 0.2);
+  stroke-width: 1;
+}
+
+.bpm-history-time-line {
+  stroke: rgba(174, 223, 244, 0.16);
+  stroke-width: 1;
+}
+
+.bpm-history-horizontal-line {
+  stroke: rgba(177, 222, 243, 0.18);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.bpm-history-time-label,
+.bpm-history-y-label {
+  fill: rgba(207, 236, 251, 0.82);
+  font: 500 10px/1 'Space Grotesk', sans-serif;
+}
+
+.bpm-history-grid-label {
+  fill: rgba(182, 223, 243, 0.74);
+  font: 500 9px/1 'Space Grotesk', sans-serif;
+}
+
+.bpm-history-extreme-line {
+  stroke-width: 1.15;
+  stroke-dasharray: 4 4;
+}
+
+.bpm-history-extreme-max {
+  stroke: rgba(255, 140, 130, 0.88);
+}
+
+.bpm-history-extreme-min {
+  stroke: rgba(129, 184, 255, 0.88);
+}
+
+.bpm-history-extreme-label {
+  font: 600 10px/1 'Space Grotesk', sans-serif;
+}
+
+.bpm-history-extreme-max-label {
+  fill: rgba(255, 177, 168, 0.96);
+}
+
+.bpm-history-extreme-min-label {
+  fill: rgba(171, 206, 255, 0.96);
+}
+
+.bpm-history-trace {
+  fill: none;
+  stroke: rgba(107, 237, 194, 0.92);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.bpm-history-caption {
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  color: rgba(206, 236, 251, 0.74);
+}
+
 .graph-legend-item {
   display: inline-flex;
   align-items: center;

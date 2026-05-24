@@ -30,6 +30,7 @@ function App() {
   const { inputDevices, selectedInputId, setSelectedInputId, deviceError, refreshDevices } = useAudioDevices()
   const {
     offsetSamples,
+    bpmHistorySamples,
     intervalSamples,
     intervalStats,
     detectedBeatCount,
@@ -273,6 +274,7 @@ function App() {
       <div className="main-column">
         <BeatGraph
           offsetSamples={offsetSamples}
+          bpmHistorySamples={bpmHistorySamples}
           graphNowMs={graphNowMs}
           energy={energy}
           inputMode={inputMode}

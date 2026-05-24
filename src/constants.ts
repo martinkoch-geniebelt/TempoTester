@@ -1,4 +1,5 @@
 export const GRAPH_HISTORY_MS = 12000
+export const BPM_HISTORY_MS = 180000
 export const GRAPH_WIDTH = 920
 export const GRAPH_HEIGHT = 220
 export const GRAPH_PADDING_LEFT = 156

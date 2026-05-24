@@ -7,6 +7,11 @@ export type OffsetSample = {
   beatInBar: 1 | 2 | 3 | 4
 }
 
+export type BpmSample = {
+  bpm: number
+  at: number
+}
+
 export type DeviceOption = {
   id: string
   label: string

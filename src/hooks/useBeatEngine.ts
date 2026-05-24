@@ -1,14 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MutableRefObject } from 'react'
-import { DEFAULT_INTERVAL_MS, GRAPH_HISTORY_MS, MAX_INTERVAL_MS, MIN_INTERVAL_MS, OUTLIER_RATIO } from '../constants'
+import {
+  BPM_HISTORY_MS,
+  DEFAULT_INTERVAL_MS,
+  GRAPH_HISTORY_MS,
+  MAX_INTERVAL_MS,
+  MIN_INTERVAL_MS,
+  OUTLIER_RATIO,
+} from '../constants'
 import { median } from '../utils'
-import type { OffsetSample } from '../types'
+import type { BpmSample, OffsetSample } from '../types'
 
 export function useBeatEngine(
   audioContextRef: MutableRefObject<AudioContext | null>,
   ensureAudioContext: () => Promise<AudioContext>,
 ) {
   const [offsetSamples, setOffsetSamples] = useState<OffsetSample[]>([])
+  const [bpmHistorySamples, setBpmHistorySamples] = useState<BpmSample[]>([])
   const [intervalSamples, setIntervalSamples] = useState<number[]>([])
   const [detectedBeatCount, setDetectedBeatCount] = useState(0)
   const [emulatedBeatCount, setEmulatedBeatCount] = useState(0)
@@ -45,8 +53,20 @@ export function useBeatEngine(
     return Math.max(24, Math.ceil(beatsInWindow * 2))
   }, [intervalSamples])
 
+  const retainedBpmHistoryCount = useMemo(() => {
+    let estimatedIntervalMs = DEFAULT_INTERVAL_MS
+    if (intervalSamples.length > 0) {
+      estimatedIntervalMs = intervalSamples.reduce((acc, value) => acc + value, 0) / intervalSamples.length
+    }
+    const beatsInWindow = BPM_HISTORY_MS / Math.max(estimatedIntervalMs, 1)
+    return Math.max(180, Math.ceil(beatsInWindow * 1.25))
+  }, [intervalSamples])
+
   const retainedBeatCountRef = useRef(retainedBeatCount)
   retainedBeatCountRef.current = retainedBeatCount
+
+  const retainedBpmHistoryCountRef = useRef(retainedBpmHistoryCount)
+  retainedBpmHistoryCountRef.current = retainedBpmHistoryCount
 
   const intervalStats = useMemo(() => {
     if (intervalSamples.length === 0) {
@@ -76,6 +96,7 @@ export function useBeatEngine(
 
       const currentSamples = intervalSamplesRef.current
       const currentRetainedCount = retainedBeatCountRef.current
+      const currentRetainedBpmCount = retainedBpmHistoryCountRef.current
 
       if (lastFreeBeatRef.current !== null) {
         const rawMs = (beatTimeSeconds - lastFreeBeatRef.current) * 1000
@@ -113,6 +134,10 @@ export function useBeatEngine(
             acceptedBeatOrdinalRef.current += 1
             setAcceptedIntervalMs(rawMs)
             setIntervalSamples((samples) => [...samples, rawMs].slice(-currentRetainedCount))
+            setBpmHistorySamples((samples) => {
+              const next = [...samples, { bpm: 60000 / rawMs, at: performance.now() }]
+              return next.slice(-currentRetainedBpmCount)
+            })
             setOffsetSamples((samples) => {
               const next = [...samples, { valueMs: rawMs, at: performance.now(), source, beatInBar }]
               return next.slice(-currentRetainedCount)
@@ -133,6 +158,7 @@ export function useBeatEngine(
     lastFreeBeatRef.current = null
     acceptedBeatOrdinalRef.current = 0
     setIntervalSamples([])
+    setBpmHistorySamples([])
     setOffsetSamples([])
     setDetectedBeatCount(0)
     setEmulatedBeatCount(0)
@@ -160,6 +186,13 @@ export function useBeatEngine(
       return samples.slice(-retainedBeatCount)
     })
   }, [retainedBeatCount])
+
+  useEffect(() => {
+    setBpmHistorySamples((samples) => {
+      if (samples.length <= retainedBpmHistoryCount) return samples
+      return samples.slice(-retainedBpmHistoryCount)
+    })
+  }, [retainedBpmHistoryCount])
 
   // Emulation scheduling — runs inside the effect to avoid stale-closure issues with BPM changes.
   useEffect(() => {
@@ -200,6 +233,7 @@ export function useBeatEngine(
 
   return {
     offsetSamples,
+    bpmHistorySamples,
     intervalSamples,
     retainedBeatCount,
     intervalStats,

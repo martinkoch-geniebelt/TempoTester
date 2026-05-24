@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import {
+  BPM_HISTORY_MS,
   GRAPH_HEIGHT,
   GRAPH_HISTORY_MS,
   GRAPH_PADDING_BOTTOM,
@@ -10,10 +11,11 @@ import {
   NOW_ANCHOR_RATIO,
 } from '../constants'
 import { colorForOffset } from '../utils'
-import type { OffsetSample } from '../types'
+import type { BpmSample, OffsetSample } from '../types'
 
 interface BeatGraphProps {
   offsetSamples: OffsetSample[]
+  bpmHistorySamples: BpmSample[]
   graphNowMs: number
   energy: number
   inputMode: 'mic' | 'key'
@@ -31,9 +33,25 @@ const visiblePastMs = GRAPH_HISTORY_MS * NOW_ANCHOR_RATIO
 const graphTitle = 'Beat Interval'
 const graphAriaLabel = 'Beat interval graph over time'
 const graphCaption = 'Y-axis shows beat interval duration.'
+const bpmHistoryTitle = 'Historical BPM'
+const bpmHistoryCaption = 'Smoothed tempo trend over the last 3 minutes.'
+
+const bpmGraphHeight = 86
+const bpmGraphPaddingLeft = 50
+const bpmGraphPaddingRight = 20
+const bpmGraphPaddingTop = 10
+const bpmGraphPaddingBottom = 22
+const bpmGraphUsableWidth = GRAPH_WIDTH - bpmGraphPaddingLeft - bpmGraphPaddingRight
+const bpmGraphUsableHeight = bpmGraphHeight - bpmGraphPaddingTop - bpmGraphPaddingBottom
+
+const formatBpmFromMs = (valueMs: number) => {
+  if (valueMs <= 0) return '0.00'
+  return (60000 / valueMs).toFixed(2)
+}
 
 export function BeatGraph({
   offsetSamples,
+  bpmHistorySamples,
   graphNowMs,
   energy,
   inputMode,
@@ -156,6 +174,83 @@ export function BeatGraph({
     return lines
   }, [])
 
+  const visibleBpmSamples = useMemo(() => {
+    const minTime = windowNowMs - BPM_HISTORY_MS
+    return bpmHistorySamples.filter((sample) => sample.at >= minTime)
+  }, [bpmHistorySamples, windowNowMs])
+
+  const bpmRange = useMemo(() => {
+    if (visibleBpmSamples.length === 0) {
+      return { min: 80, max: 140 }
+    }
+    let min = Infinity
+    let max = -Infinity
+    for (const sample of visibleBpmSamples) {
+      if (sample.bpm < min) min = sample.bpm
+      if (sample.bpm > max) max = sample.bpm
+    }
+    const padding = Math.max(2.5, (max - min) * 0.22)
+    return {
+      min: Math.max(30, min - padding),
+      max: Math.min(260, max + padding),
+    }
+  }, [visibleBpmSamples])
+
+  const bpmPoints = useMemo(() => {
+    if (visibleBpmSamples.length === 0) return []
+    const range = Math.max(1, bpmRange.max - bpmRange.min)
+    return visibleBpmSamples.map((sample) => {
+      const ageMs = windowNowMs - sample.at
+      const x = GRAPH_WIDTH - bpmGraphPaddingRight - (ageMs / BPM_HISTORY_MS) * bpmGraphUsableWidth
+      const normalizedBpm = (sample.bpm - bpmRange.min) / range
+      const y = bpmGraphPaddingTop + (1 - normalizedBpm) * bpmGraphUsableHeight
+      return { x, y, bpm: sample.bpm }
+    })
+  }, [visibleBpmSamples, bpmRange, windowNowMs])
+
+  const bpmPolyline = useMemo(() => {
+    return bpmPoints.map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(' ')
+  }, [bpmPoints])
+
+  const bpmGrid = useMemo(() => {
+    const lines: Array<{ x: number; label: string }> = []
+    for (let age = 0; age <= BPM_HISTORY_MS; age += 30000) {
+      const x = GRAPH_WIDTH - bpmGraphPaddingRight - (age / BPM_HISTORY_MS) * bpmGraphUsableWidth
+      if (x >= bpmGraphPaddingLeft) {
+        lines.push({ x, label: age === 0 ? 'now' : `-${Math.round(age / 1000)}s` })
+      }
+    }
+    return lines
+  }, [])
+
+  const bpmHorizontalGrid = useMemo(() => {
+    const lines: Array<{ y: number; bpm: number }> = []
+    const range = Math.max(1, bpmRange.max - bpmRange.min)
+    for (let step = 1; step <= 3; step += 1) {
+      const ratio = step / 4
+      const bpm = bpmRange.max - range * ratio
+      const y = bpmGraphPaddingTop + bpmGraphUsableHeight * ratio
+      lines.push({ y, bpm })
+    }
+    return lines
+  }, [bpmRange])
+
+  const bpmExtremes = useMemo(() => {
+    if (visibleBpmSamples.length === 0) {
+      return null
+    }
+    let min = Infinity
+    let max = -Infinity
+    for (const sample of visibleBpmSamples) {
+      if (sample.bpm < min) min = sample.bpm
+      if (sample.bpm > max) max = sample.bpm
+    }
+    const range = Math.max(1, bpmRange.max - bpmRange.min)
+    const maxY = bpmGraphPaddingTop + ((bpmRange.max - max) / range) * bpmGraphUsableHeight
+    const minY = bpmGraphPaddingTop + ((bpmRange.max - min) / range) * bpmGraphUsableHeight
+    return { max, min, maxY, minY }
+  }, [visibleBpmSamples, bpmRange])
+
   return (
     <section className="panel visual-panel">
       <h2>{graphTitle}</h2>
@@ -225,7 +320,7 @@ export function BeatGraph({
                 className="graph-extreme-label graph-extreme-max-label"
                 textAnchor="end"
               >
-                {`max ${visibleExtremes.maxValue.toFixed(1)} ms (|Δ| ${visibleExtremes.maxDeltaFromCenter.toFixed(1)} ms, ${visibleExtremes.maxDeltaPct.toFixed(1)}%)`}
+                {`max ${visibleExtremes.maxValue.toFixed(1)} ms (${formatBpmFromMs(visibleExtremes.maxValue)} BPM, |Δ| ${visibleExtremes.maxDeltaFromCenter.toFixed(1)} ms, ${visibleExtremes.maxDeltaPct.toFixed(1)}%)`}
               </text>
               <text
                 x={GRAPH_WIDTH - GRAPH_PADDING_RIGHT - 6}
@@ -233,7 +328,7 @@ export function BeatGraph({
                 className="graph-extreme-label graph-extreme-min-label"
                 textAnchor="end"
               >
-                {`min ${visibleExtremes.minValue.toFixed(1)} ms (|Δ| ${visibleExtremes.minDeltaFromCenter.toFixed(1)} ms, ${visibleExtremes.minDeltaPct.toFixed(1)}%)`}
+                {`min ${visibleExtremes.minValue.toFixed(1)} ms (${formatBpmFromMs(visibleExtremes.minValue)} BPM, |Δ| ${visibleExtremes.minDeltaFromCenter.toFixed(1)} ms, ${visibleExtremes.minDeltaPct.toFixed(1)}%)`}
               </text>
             </>
           ) : null}
@@ -327,6 +422,116 @@ export function BeatGraph({
             <span className="graph-legend-dot graph-legend-behind" aria-hidden="true" /> Behind
           </span>
         </div>
+      </div>
+
+      <div className="bpm-history-wrap" role="img" aria-label="Historical BPM graph">
+        <div className="bpm-history-head">
+          <h3>{bpmHistoryTitle}</h3>
+          {bpmPoints.length > 0 ? (
+            <span className="bpm-history-latest">Latest {bpmPoints[bpmPoints.length - 1].bpm.toFixed(2)} BPM</span>
+          ) : (
+            <span className="bpm-history-latest">Waiting for BPM samples...</span>
+          )}
+        </div>
+        <svg className="bpm-history-graph" viewBox={`0 0 ${GRAPH_WIDTH} ${bpmGraphHeight}`}>
+          <rect
+            x={bpmGraphPaddingLeft}
+            y={bpmGraphPaddingTop}
+            width={bpmGraphUsableWidth}
+            height={bpmGraphUsableHeight}
+            className="bpm-history-plot"
+          />
+
+          {bpmHorizontalGrid.map((line, index) => (
+            <g key={`${line.y}-${index}`}>
+              <line
+                x1={bpmGraphPaddingLeft}
+                y1={line.y}
+                x2={GRAPH_WIDTH - bpmGraphPaddingRight}
+                y2={line.y}
+                className="bpm-history-horizontal-line"
+              />
+              <text
+                x={bpmGraphPaddingLeft - 8}
+                y={line.y + 3}
+                className="bpm-history-grid-label"
+                textAnchor="end"
+              >
+                {line.bpm.toFixed(1)}
+              </text>
+            </g>
+          ))}
+
+          {bpmGrid.map((line) => (
+            <g key={line.label}>
+              <line
+                x1={line.x}
+                y1={bpmGraphPaddingTop}
+                x2={line.x}
+                y2={bpmGraphHeight - bpmGraphPaddingBottom}
+                className="bpm-history-time-line"
+              />
+              <text x={line.x} y={bpmGraphHeight - 6} className="bpm-history-time-label" textAnchor="middle">
+                {line.label}
+              </text>
+            </g>
+          ))}
+
+          <text
+            x={bpmGraphPaddingLeft - 8}
+            y={bpmGraphPaddingTop + 10}
+            className="bpm-history-y-label"
+            textAnchor="end"
+          >
+            {`${bpmRange.max.toFixed(1)} bpm`}
+          </text>
+          <text
+            x={bpmGraphPaddingLeft - 8}
+            y={bpmGraphHeight - bpmGraphPaddingBottom + 2}
+            className="bpm-history-y-label"
+            textAnchor="end"
+          >
+            {`${bpmRange.min.toFixed(1)} bpm`}
+          </text>
+
+          {bpmExtremes ? (
+            <>
+              <line
+                x1={bpmGraphPaddingLeft}
+                y1={bpmExtremes.maxY}
+                x2={GRAPH_WIDTH - bpmGraphPaddingRight}
+                y2={bpmExtremes.maxY}
+                className="bpm-history-extreme-line bpm-history-extreme-max"
+              />
+              <line
+                x1={bpmGraphPaddingLeft}
+                y1={bpmExtremes.minY}
+                x2={GRAPH_WIDTH - bpmGraphPaddingRight}
+                y2={bpmExtremes.minY}
+                className="bpm-history-extreme-line bpm-history-extreme-min"
+              />
+              <text
+                x={GRAPH_WIDTH - bpmGraphPaddingRight - 6}
+                y={bpmExtremes.maxY - 3}
+                className="bpm-history-extreme-label bpm-history-extreme-max-label"
+                textAnchor="end"
+              >
+                {`max ${bpmExtremes.max.toFixed(2)} bpm`}
+              </text>
+              <text
+                x={GRAPH_WIDTH - bpmGraphPaddingRight - 6}
+                y={bpmExtremes.minY - 3}
+                className="bpm-history-extreme-label bpm-history-extreme-min-label"
+                textAnchor="end"
+              >
+                {`min ${bpmExtremes.min.toFixed(2)} bpm`}
+              </text>
+            </>
+          ) : null}
+
+          {bpmPolyline ? <polyline className="bpm-history-trace" points={bpmPolyline} /> : null}
+        </svg>
+        <div className="bpm-history-caption">{bpmHistoryCaption}</div>
       </div>
 
       <div className="meter-wrap">
