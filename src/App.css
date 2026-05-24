@@ -187,6 +187,28 @@
   font-size: 0.84rem;
 }
 
+@keyframes tap-flash {
+  0% {
+    opacity: 1;
+    transform: scale(1.4);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+.tap-flash-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(92, 208, 168, 0.95);
+  margin-left: 7px;
+  vertical-align: middle;
+  animation: tap-flash 0.35s ease-out forwards;
+}
+
 .offset-graph-wrap {
   margin-top: 0.35rem;
 }
@@ -244,6 +266,27 @@
 .graph-now-line {
   stroke: rgba(122, 245, 203, 0.95);
   stroke-width: 2;
+}
+
+@keyframes key-flash-ring {
+  from {
+    opacity: 0.9;
+    transform: scale(0.05);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+.key-flash-ring {
+  fill: none;
+  stroke: rgba(122, 245, 203, 0.95);
+  stroke-width: 2.5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: key-flash-ring 0.38s ease-out forwards;
+  pointer-events: none;
 }
 
 .graph-time-label,

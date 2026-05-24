@@ -1,0 +1,14 @@
+export const GRAPH_HISTORY_MS = 12000
+export const GRAPH_WIDTH = 920
+export const GRAPH_HEIGHT = 220
+export const GRAPH_PADDING_LEFT = 156
+export const GRAPH_PADDING_RIGHT = 22
+export const GRAPH_PADDING_TOP = 14
+export const GRAPH_PADDING_BOTTOM = 30
+export const NOW_ANCHOR_RATIO = 0.82
+export const DETECTOR_MIN_GAP_SECONDS = 0.09
+export const DEFAULT_INTERVAL_MS = 600
+export const MIN_INTERVAL_MS = 80
+export const MAX_INTERVAL_MS = 3000
+export const OUTLIER_RATIO = 0.34
+export const STANDARD_NOISE_FLOOR_GATE = 0.01
