@@ -60,6 +60,8 @@ export function BeatGraph({
     return sum / visibleGraphSamples.length
   }, [visibleGraphSamples, targetBpmEnabled, targetBpm])
 
+  const keyOnWindowMs = Math.max(8, graphCenterMs * 0.025)
+
   const yRangeMs = useMemo(() => {
     if (visibleGraphSamples.length === 0) return 10
     const peakAbs = visibleGraphSamples.reduce((peak, sample) => {
@@ -77,9 +79,25 @@ export function BeatGraph({
       const centeredValue = sample.valueMs - graphCenterMs
       const clampedOffset = Math.max(Math.min(centeredValue, yRangeMs), -yRangeMs)
       const y = zeroY + (clampedOffset / yRangeMs) * (graphUsableHeight / 2)
-      return { x, y, source: sample.source, valueMs: sample.valueMs, centeredValueMs: centeredValue }
+      const keyTimingState =
+        sample.source === 'key' && graphCenterMs > 0
+          ? centeredValue < -keyOnWindowMs
+            ? 'ahead'
+            : centeredValue > keyOnWindowMs
+              ? 'behind'
+              : 'on'
+          : null
+      return {
+        x,
+        y,
+        source: sample.source,
+        valueMs: sample.valueMs,
+        centeredValueMs: centeredValue,
+        beatInBar: sample.beatInBar,
+        keyTimingState,
+      }
     })
-  }, [visibleGraphSamples, windowNowMs, yRangeMs, graphCenterMs])
+  }, [visibleGraphSamples, windowNowMs, yRangeMs, graphCenterMs, keyOnWindowMs])
 
   const graphPolyline = useMemo(() => {
     return graphPoints.map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(' ')
@@ -99,14 +117,18 @@ export function BeatGraph({
     const minCentered = minOffset - graphCenterMs
     const clampedMax = Math.max(Math.min(maxCentered, yRangeMs), -yRangeMs)
     const clampedMin = Math.max(Math.min(minCentered, yRangeMs), -yRangeMs)
+    const visibleMaxValue = graphCenterMs + clampedMax
+    const visibleMinValue = graphCenterMs + clampedMin
+    const visibleMaxDelta = Math.abs(clampedMax)
+    const visibleMinDelta = Math.abs(clampedMin)
 
     return {
-      maxValue: maxOffset,
-      minValue: minOffset,
-      maxDeltaFromCenter: Math.abs(maxOffset - graphCenterMs),
-      minDeltaFromCenter: Math.abs(minOffset - graphCenterMs),
-      maxDeltaPct: graphCenterMs > 0 ? (Math.abs(maxOffset - graphCenterMs) / graphCenterMs) * 100 : 0,
-      minDeltaPct: graphCenterMs > 0 ? (Math.abs(minOffset - graphCenterMs) / graphCenterMs) * 100 : 0,
+      maxValue: visibleMaxValue,
+      minValue: visibleMinValue,
+      maxDeltaFromCenter: visibleMaxDelta,
+      minDeltaFromCenter: visibleMinDelta,
+      maxDeltaPct: graphCenterMs > 0 ? (visibleMaxDelta / graphCenterMs) * 100 : 0,
+      minDeltaPct: graphCenterMs > 0 ? (visibleMinDelta / graphCenterMs) * 100 : 0,
       maxY: zeroY + (clampedMax / yRangeMs) * (graphUsableHeight / 2),
       minY: zeroY + (clampedMin / yRangeMs) * (graphUsableHeight / 2),
     }
@@ -265,22 +287,46 @@ export function BeatGraph({
             {graphPolyline ? <polyline className="graph-trace" points={graphPolyline} /> : null}
 
             {graphPoints.map((point, index) => (
-              <circle
-                key={`${point.x}-${point.y}-${index}`}
-                cx={point.x}
-                cy={point.y}
-                r={4}
-                className={`graph-point graph-point-${point.source}`}
-                style={{ fill: colorForOffset(point.centeredValueMs, yRangeMs) }}
-              >
-                <title>
-                  {`${point.source === 'mic' ? 'Mic' : point.source === 'key' ? 'Key' : 'Emu'} ${point.valueMs.toFixed(1)} ms`}
-                </title>
-              </circle>
+              <g key={`${point.x}-${point.y}-${index}`}>
+                <circle
+                  cx={point.x}
+                  cy={point.y}
+                  r={4}
+                  className={`graph-point graph-point-${point.source}${point.keyTimingState ? ` graph-point-key-${point.keyTimingState}` : ''}`}
+                  style={{
+                    fill:
+                      point.keyTimingState === 'ahead'
+                        ? '#59b3ff'
+                        : point.keyTimingState === 'on'
+                          ? '#5de19d'
+                          : point.keyTimingState === 'behind'
+                            ? '#ff8768'
+                            : colorForOffset(point.centeredValueMs, yRangeMs),
+                  }}
+                >
+                  <title>
+                    {`${point.source === 'mic' ? 'Mic' : point.source === 'key' ? 'Key' : 'Emu'} ${point.valueMs.toFixed(1)} ms${point.keyTimingState ? ` (${point.keyTimingState})` : ''}`}
+                  </title>
+                </circle>
+                <text x={point.x} y={point.y - 8} textAnchor="middle" className="graph-beat-index">
+                  {point.beatInBar}
+                </text>
+              </g>
             ))}
           </g>
         </svg>
         <div className="graph-caption">{graphCaption}</div>
+        <div className="graph-legend" aria-label="Key timing legend">
+          <span className="graph-legend-item">
+            <span className="graph-legend-dot graph-legend-ahead" aria-hidden="true" /> Ahead
+          </span>
+          <span className="graph-legend-item">
+            <span className="graph-legend-dot graph-legend-on" aria-hidden="true" /> On
+          </span>
+          <span className="graph-legend-item">
+            <span className="graph-legend-dot graph-legend-behind" aria-hidden="true" /> Behind
+          </span>
+        </div>
       </div>
 
       <div className="meter-wrap">

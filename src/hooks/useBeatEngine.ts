@@ -23,6 +23,7 @@ export function useBeatEngine(
 
   const lastFreeBeatRef = useRef<number | null>(null)
   const emulationNextBeatRef = useRef(0)
+  const acceptedBeatOrdinalRef = useRef(0)
 
   // Stale-closure-safe refs — kept in sync with state on every render
   const intervalSamplesRef = useRef<number[]>([])
@@ -108,10 +109,12 @@ export function useBeatEngine(
           }
 
           if (shouldAccept) {
+            const beatInBar = ((acceptedBeatOrdinalRef.current % 4) + 1) as 1 | 2 | 3 | 4
+            acceptedBeatOrdinalRef.current += 1
             setAcceptedIntervalMs(rawMs)
             setIntervalSamples((samples) => [...samples, rawMs].slice(-currentRetainedCount))
             setOffsetSamples((samples) => {
-              const next = [...samples, { valueMs: rawMs, at: performance.now(), source }]
+              const next = [...samples, { valueMs: rawMs, at: performance.now(), source, beatInBar }]
               return next.slice(-currentRetainedCount)
             })
           }
@@ -128,6 +131,7 @@ export function useBeatEngine(
 
   const resetFreeIntervalTracking = useCallback(() => {
     lastFreeBeatRef.current = null
+    acceptedBeatOrdinalRef.current = 0
     setIntervalSamples([])
     setOffsetSamples([])
     setDetectedBeatCount(0)
