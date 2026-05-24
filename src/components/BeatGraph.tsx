@@ -18,6 +18,8 @@ interface BeatGraphProps {
   energy: number
   inputMode: 'mic' | 'key'
   keyFlashCount: number
+  targetBpmEnabled: boolean
+  targetBpm: number
 }
 
 const graphUsableWidth = GRAPH_WIDTH - GRAPH_PADDING_LEFT - GRAPH_PADDING_RIGHT
@@ -30,7 +32,15 @@ const graphTitle = 'Beat Interval'
 const graphAriaLabel = 'Beat interval graph over time'
 const graphCaption = 'Y-axis shows beat interval duration.'
 
-export function BeatGraph({ offsetSamples, graphNowMs, energy, inputMode, keyFlashCount }: BeatGraphProps) {
+export function BeatGraph({
+  offsetSamples,
+  graphNowMs,
+  energy,
+  inputMode,
+  keyFlashCount,
+  targetBpmEnabled,
+  targetBpm,
+}: BeatGraphProps) {
   const windowNowMs = useMemo(() => {
     const lastSampleAt = offsetSamples.length > 0 ? offsetSamples[offsetSamples.length - 1].at : 0
     return Math.max(graphNowMs, lastSampleAt)
@@ -42,10 +52,13 @@ export function BeatGraph({ offsetSamples, graphNowMs, energy, inputMode, keyFla
   }, [offsetSamples, windowNowMs])
 
   const graphCenterMs = useMemo(() => {
+    if (targetBpmEnabled) {
+      return 60000 / Math.max(30, targetBpm)
+    }
     if (visibleGraphSamples.length === 0) return 0
     const sum = visibleGraphSamples.reduce((acc, sample) => acc + sample.valueMs, 0)
     return sum / visibleGraphSamples.length
-  }, [visibleGraphSamples])
+  }, [visibleGraphSamples, targetBpmEnabled, targetBpm])
 
   const yRangeMs = useMemo(() => {
     if (visibleGraphSamples.length === 0) return 10
@@ -225,7 +238,7 @@ export function BeatGraph({ offsetSamples, graphNowMs, energy, inputMode, keyFla
             {(graphCenterMs + yRangeMs).toFixed(0)} ms
           </text>
           <text x={GRAPH_PADDING_LEFT - 10} y={zeroY + 4} className="graph-y-label" textAnchor="end">
-            {`${graphCenterMs.toFixed(1)} ms (${(graphCenterMs > 0 ? 60000 / graphCenterMs : 0).toFixed(2)} BPM)`}
+            {`${graphCenterMs.toFixed(1)} ms (${(graphCenterMs > 0 ? 60000 / graphCenterMs : 0).toFixed(2)} BPM${targetBpmEnabled ? ' target' : ''})`}
           </text>
           <text
             x={GRAPH_PADDING_LEFT - 10}

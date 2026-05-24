@@ -20,6 +20,10 @@ interface ControlPanelProps {
   setListening: (val: boolean | ((prev: boolean) => boolean)) => void
   calibrating: boolean
   calibrationInfo: string
+  targetBpmEnabled: boolean
+  setTargetBpmEnabled: (val: boolean) => void
+  targetBpm: number
+  setTargetBpm: (val: number) => void
   emulationEnabled: boolean
   setEmulationEnabled: (val: boolean) => void
   emulationBpm: number
@@ -61,6 +65,10 @@ export function ControlPanel({
   setListening,
   calibrating,
   calibrationInfo,
+  targetBpmEnabled,
+  setTargetBpmEnabled,
+  targetBpm,
+  setTargetBpm,
   emulationEnabled,
   setEmulationEnabled,
   emulationBpm,
@@ -145,6 +153,30 @@ export function ControlPanel({
           <option value="on">On</option>
         </select>
 
+        <label htmlFor="target-bpm-enabled">Target BPM mode</label>
+        <select
+          id="target-bpm-enabled"
+          value={targetBpmEnabled ? 'on' : 'off'}
+          onChange={(event) => setTargetBpmEnabled(event.target.value === 'on')}
+        >
+          <option value="off">Off</option>
+          <option value="on">On</option>
+        </select>
+
+        {targetBpmEnabled ? (
+          <>
+            <label htmlFor="target-bpm">Target tempo: {targetBpm} BPM</label>
+            <input
+              id="target-bpm"
+              type="range"
+              min={40}
+              max={220}
+              value={targetBpm}
+              onChange={(event) => setTargetBpm(Number(event.target.value))}
+            />
+          </>
+        ) : null}
+
         {emulationEnabled ? (
           <>
             <label htmlFor="emulation-bpm">Emulation tempo: {emulationBpm} BPM</label>
@@ -224,6 +256,9 @@ export function ControlPanel({
       <p className="calibration-info">
         Detector debug: raw {rawIntervalMs !== null ? `${rawIntervalMs.toFixed(1)} ms` : '--'} | accepted{' '}
         {acceptedIntervalMs !== null ? `${acceptedIntervalMs.toFixed(1)} ms` : '--'} | rejected {rejectedIntervalCount}
+      </p>
+      <p className="calibration-info">
+        Target mode: {targetBpmEnabled ? `on (${targetBpm} BPM)` : 'off'}
       </p>
       <p className="calibration-info">External metronome mode: internal click disabled.</p>
       <p className="calibration-info">

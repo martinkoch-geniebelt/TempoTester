@@ -15,6 +15,8 @@ export function useBeatEngine(
   const [rawIntervalMs, setRawIntervalMs] = useState<number | null>(null)
   const [acceptedIntervalMs, setAcceptedIntervalMs] = useState<number | null>(null)
   const [rejectedIntervalCount, setRejectedIntervalCount] = useState(0)
+  const [targetBpmEnabled, setTargetBpmEnabled] = useState(false)
+  const [targetBpm, setTargetBpm] = useState(120)
   const [emulationEnabled, setEmulationEnabled] = useState(false)
   const [emulationBpm, setEmulationBpm] = useState(120)
   const [emulationJitterMs, setEmulationJitterMs] = useState(0)
@@ -25,6 +27,12 @@ export function useBeatEngine(
   // Stale-closure-safe refs — kept in sync with state on every render
   const intervalSamplesRef = useRef<number[]>([])
   intervalSamplesRef.current = intervalSamples
+
+  const targetBpmEnabledRef = useRef(targetBpmEnabled)
+  targetBpmEnabledRef.current = targetBpmEnabled
+
+  const targetBpmRef = useRef(targetBpm)
+  targetBpmRef.current = targetBpm
 
   const retainedBeatCount = useMemo(() => {
     const windowMs = GRAPH_HISTORY_MS
@@ -74,13 +82,22 @@ export function useBeatEngine(
 
         if (rawMs >= MIN_INTERVAL_MS && rawMs <= MAX_INTERVAL_MS) {
           let shouldAccept = true
+          const targetModeEnabled = targetBpmEnabledRef.current
+          const targetIntervalMs = 60000 / Math.max(30, targetBpmRef.current)
 
-          if (currentSamples.length >= 4) {
+          if (targetModeEnabled) {
+            const errorRatio = Math.abs(rawMs - targetIntervalMs) / targetIntervalMs
+            if (errorRatio > OUTLIER_RATIO) {
+              setAcceptedIntervalMs(null)
+              setRejectedIntervalCount((count) => count + 1)
+              shouldAccept = false
+            }
+          } else if (currentSamples.length >= 4) {
             const recent = currentSamples.slice(-6)
-            const targetMs = median(recent)
+            const baselineMs = median(recent)
 
-            if (targetMs > 0) {
-              const errorRatio = Math.abs(rawMs - targetMs) / targetMs
+            if (baselineMs > 0) {
+              const errorRatio = Math.abs(rawMs - baselineMs) / baselineMs
               if (errorRatio > OUTLIER_RATIO) {
                 // Reject sample but still advance anchor to avoid every-second-beat lock-in.
                 setAcceptedIntervalMs(null)
@@ -88,17 +105,9 @@ export function useBeatEngine(
                 shouldAccept = false
               }
             }
+          }
 
-            if (shouldAccept) {
-              setAcceptedIntervalMs(rawMs)
-              setIntervalSamples((samples) => [...samples, rawMs].slice(-currentRetainedCount))
-              setOffsetSamples((samples) => {
-                const next = [...samples, { valueMs: rawMs, at: performance.now(), source }]
-                return next.slice(-currentRetainedCount)
-              })
-            }
-          } else {
-            // Bootstrap interval history before enabling outlier rejection.
+          if (shouldAccept) {
             setAcceptedIntervalMs(rawMs)
             setIntervalSamples((samples) => [...samples, rawMs].slice(-currentRetainedCount))
             setOffsetSamples((samples) => {
@@ -195,6 +204,10 @@ export function useBeatEngine(
     rawIntervalMs,
     acceptedIntervalMs,
     rejectedIntervalCount,
+    targetBpmEnabled,
+    setTargetBpmEnabled,
+    targetBpm,
+    setTargetBpm,
     emulationEnabled,
     setEmulationEnabled,
     emulationBpm,

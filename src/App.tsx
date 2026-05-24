@@ -37,6 +37,10 @@ function App() {
     rawIntervalMs,
     acceptedIntervalMs,
     rejectedIntervalCount,
+    targetBpmEnabled,
+    setTargetBpmEnabled,
+    targetBpm,
+    setTargetBpm,
     emulationEnabled,
     setEmulationEnabled,
     emulationBpm,
@@ -100,6 +104,8 @@ function App() {
       `raw_interval_ms=${fmt(rawIntervalMs, 1)}`,
       `accepted_interval_ms=${fmt(acceptedIntervalMs, 1)}`,
       `rejected_intervals=${rejectedIntervalCount}`,
+      `target_bpm_enabled=${targetBpmEnabled ? 'true' : 'false'}`,
+      `target_bpm=${targetBpm}`,
       `visible_samples=${visibleSamplesCount}`,
       `stored_samples=${offsetSamples.length}`,
       `interval_count=${intervalSamples.length}`,
@@ -125,6 +131,8 @@ function App() {
     rawIntervalMs,
     acceptedIntervalMs,
     rejectedIntervalCount,
+    targetBpmEnabled,
+    targetBpm,
     visibleSamplesCount,
     offsetSamples.length,
     intervalSamples,
@@ -269,6 +277,8 @@ function App() {
           energy={energy}
           inputMode={inputMode}
           keyFlashCount={keyFlashCount}
+          targetBpmEnabled={targetBpmEnabled}
+          targetBpm={targetBpm}
         />
         <ControlPanel
           inputMode={inputMode}
@@ -284,6 +294,10 @@ function App() {
           calibrationInfo={calibrationInfo}
           emulationEnabled={emulationEnabled}
           setEmulationEnabled={setEmulationEnabled}
+          targetBpmEnabled={targetBpmEnabled}
+          setTargetBpmEnabled={setTargetBpmEnabled}
+          targetBpm={targetBpm}
+          setTargetBpm={setTargetBpm}
           emulationBpm={emulationBpm}
           setEmulationBpm={setEmulationBpm}
           emulationJitterMs={emulationJitterMs}
