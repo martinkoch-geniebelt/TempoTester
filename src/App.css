@@ -1,0 +1,293 @@
+.app-shell {
+  width: min(1140px, 94vw);
+  margin: 0 auto;
+  height: 100dvh;
+  padding: 0.7rem 0 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  overflow: hidden;
+}
+
+.panel {
+  width: 100%;
+  border-radius: 28px;
+  padding: 1rem 1.1rem;
+  position: relative;
+  backdrop-filter: blur(7px);
+}
+
+.control-panel {
+  background: linear-gradient(165deg, rgba(244, 239, 220, 0.86), rgba(236, 251, 247, 0.9));
+  border: 1px solid rgba(183, 168, 128, 0.35);
+  box-shadow: 0 24px 50px rgba(19, 40, 48, 0.18);
+}
+
+.visual-panel {
+  background: linear-gradient(160deg, rgba(6, 36, 44, 0.83), rgba(17, 47, 77, 0.88));
+  border: 1px solid rgba(153, 201, 212, 0.3);
+  box-shadow: 0 24px 50px rgba(7, 22, 34, 0.36);
+  color: #e4f8ff;
+
+  h2 {
+    color: #e4f8ff;
+  }
+}
+
+.lede {
+  margin-top: 0.1rem;
+  margin-bottom: 0.6rem;
+  color: rgba(7, 25, 32, 0.75);
+  font-size: 0.94rem;
+}
+
+.control-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(120px, 1fr));
+  gap: 0.42rem 0.65rem;
+  align-items: center;
+
+  label {
+    font-weight: 600;
+    color: #1e3138;
+    letter-spacing: 0.02em;
+    font-size: 0.84rem;
+  }
+
+  input[type='range'] {
+    width: 100%;
+    accent-color: #f77d45;
+  }
+
+  select {
+    width: 100%;
+    border: 1px solid rgba(31, 69, 77, 0.35);
+    border-radius: 10px;
+    padding: 0.4rem 0.5rem;
+    font: 500 0.88rem/1.1 'Space Grotesk', sans-serif;
+    color: #13272d;
+    background: rgba(249, 242, 225, 0.95);
+  }
+
+  button {
+    border: none;
+    border-radius: 12px;
+    padding: 0.45rem 0.7rem;
+    font: 600 0.84rem/1.1 'Space Grotesk', sans-serif;
+    cursor: pointer;
+    color: #10272e;
+    background: linear-gradient(135deg, #ffd49c, #f4b264);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 14px rgba(58, 51, 36, 0.22);
+    }
+
+    &:active {
+      transform: translateY(1px);
+    }
+  }
+
+  .key-hint {
+    grid-column: 1 / -1;
+  }
+}
+
+.status-row {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.9rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.status-pill {
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-weight: 700;
+  background: rgba(14, 29, 35, 0.1);
+  color: #10272e;
+}
+
+.status-pill.ahead {
+  background: rgba(251, 201, 94, 0.36);
+}
+
+.status-pill.behind {
+  background: rgba(246, 120, 66, 0.36);
+}
+
+.status-pill.on {
+  background: rgba(88, 198, 151, 0.35);
+}
+
+.status-pill.idle {
+  background: rgba(129, 150, 157, 0.3);
+}
+
+.subtle {
+  color: rgba(12, 36, 46, 0.65);
+  font-size: 0.8rem;
+}
+
+.error {
+  margin-top: 0.9rem;
+  color: #8f2e2e;
+  font-weight: 700;
+}
+
+.calibration-info {
+  margin-top: 0.25rem;
+  color: rgba(19, 40, 45, 0.8);
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.key-hint {
+  margin: 0;
+  font-weight: 500;
+  color: #21373f;
+  font-size: 0.84rem;
+}
+
+.offset-graph-wrap {
+  margin-top: 0.35rem;
+}
+
+.offset-graph {
+  width: 100%;
+  height: min(38vh, 310px);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 75%, rgba(123, 223, 255, 0.15), rgba(0, 0, 0, 0) 54%),
+    linear-gradient(180deg, rgba(42, 94, 133, 0.14), rgba(18, 45, 73, 0.38));
+}
+
+.graph-plot {
+  fill: rgba(10, 26, 44, 0.42);
+  stroke: rgba(169, 212, 227, 0.22);
+  stroke-width: 1;
+}
+
+.graph-time-line {
+  stroke: rgba(179, 224, 242, 0.2);
+  stroke-width: 1;
+}
+
+.graph-zero-line {
+  stroke: rgba(255, 224, 164, 0.55);
+  stroke-width: 1.5;
+}
+
+.graph-extreme-line {
+  stroke-width: 1.2;
+  stroke-dasharray: 4 5;
+}
+
+.graph-extreme-max {
+  stroke: rgba(255, 126, 112, 0.85);
+}
+
+.graph-extreme-min {
+  stroke: rgba(118, 178, 255, 0.85);
+}
+
+.graph-extreme-label {
+  font: 600 11px/1 'Space Grotesk', sans-serif;
+}
+
+.graph-extreme-max-label {
+  fill: rgba(255, 173, 163, 0.95);
+}
+
+.graph-extreme-min-label {
+  fill: rgba(167, 205, 255, 0.95);
+}
+
+.graph-now-line {
+  stroke: rgba(122, 245, 203, 0.95);
+  stroke-width: 2;
+}
+
+.graph-time-label,
+.graph-y-label {
+  fill: rgba(222, 244, 255, 0.86);
+  font: 500 12px/1 'Space Grotesk', sans-serif;
+}
+
+.graph-trace {
+  fill: none;
+  stroke: rgba(196, 233, 248, 0.25);
+  stroke-width: 1;
+}
+
+.graph-segment {
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.graph-point {
+  opacity: 0.98;
+}
+
+.graph-caption {
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  color: rgba(218, 241, 253, 0.82);
+}
+
+.meter-wrap {
+  margin-top: 0.3rem;
+  display: grid;
+  gap: 0.2rem;
+
+  span {
+    font-size: 0.76rem;
+    color: rgba(225, 245, 253, 0.85);
+  }
+}
+
+.meter-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(118, 169, 191, 0.3);
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7ce8c6, #ffe38c, #ff956f);
+  transition: width 0.08s linear;
+}
+
+@media (max-width: 800px) {
+  .app-shell {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    padding-top: 1rem;
+    width: 94vw;
+  }
+
+  .panel {
+    padding: 1.2rem;
+    border-radius: 20px;
+  }
+
+  .control-grid {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+
+  .offset-graph {
+    height: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .control-grid {
+    grid-template-columns: 1fr;
+  }
+}
